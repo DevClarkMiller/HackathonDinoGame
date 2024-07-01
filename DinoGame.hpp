@@ -24,8 +24,11 @@ class DinoGame{
         twoDVec game;
         std::random_device rd;  // Obtain a random seed from hardware
         std::mt19937 gen; // Standard mersenne_twister_engine seeded with rd()
+        int jumpFrames;
 
         bool gameLoop();
+
+        Coords playerPOS;
     public:
         DinoGame();
 
@@ -35,9 +38,11 @@ class DinoGame{
 
         void start();
 
-        void shiftScreen();
+        bool shiftScreen();
 
         void draw(const Coords& coord, Points objType);
 
         void printGame();
+
+        bool checkGameOver();
 };

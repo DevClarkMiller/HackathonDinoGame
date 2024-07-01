@@ -2,8 +2,9 @@
 
 DinoGame::DinoGame() : 
     game({{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}) {
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}), jumpFrames(0) {
         gen.seed(rd());
+        playerPOS = {1, 0};
     }
 
 bool DinoGame::isObstacle(Coords coord) {
@@ -34,17 +35,20 @@ Coords DinoGame::spawnObstacle(){
     return {-1, -1};
 }
 
-void DinoGame::shiftScreen(){
+bool DinoGame::checkGameOver(){
+    return playerPOS.y == 1 && game[1][0] == Points::OBSTACLE;
+}
+
+bool DinoGame::shiftScreen(){
     for(int i = 0; i < 2; i++){
         for(int j = 0; j < 32; j++){
-            if(game[i][j] == Points::OBSTACLE && j - 1 > 0){
+            if(game[i][j] == Points::OBSTACLE && j - 1 >= 0){
                 game[i][j] = Points::BLANK;
                 game[i][j - 1] = Points::OBSTACLE;
-            }else if(j - 1 <= 0){
-                game[i][j] = Points::BLANK;
             }
         }
     }
+    return true;
 }
 
 void DinoGame::draw(const Coords& coord, Points objType) {
@@ -54,14 +58,14 @@ void DinoGame::draw(const Coords& coord, Points objType) {
 void DinoGame::printGame(){
     for(int i = 0; i < 2; i++){
         for(int j = 0; j < 16; j++){
-            const auto& curr = game[i][j];
+            const int curr = game[i][j];
             char cChar;
             switch(curr){
                 case Points::BLANK:
                     cChar = 'O';
                     break;
                 case Points::PLAYER:
-                    cChar = 'G';
+                    cChar = 'P';
                     break;
                 case Points::OBSTACLE: 
                     cChar = '#';
@@ -76,20 +80,45 @@ void DinoGame::printGame(){
 }
 
 bool DinoGame::gameLoop(){
-    printGame();    //Prints out each of the obstacles
+    std::cout << "PLAYER POS: " << playerPOS.y << playerPOS.x;
+    std::cout << " JUMP FRAME: " << jumpFrames << '\n';
+    draw(playerPOS, Points::PLAYER);
 
+    printGame();    //Prints out each of the obstacles
+    
     char input;
     std::cin >> std::noskipws >> input;
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    if(!std::cin){
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+
+
+    bool justJumped = false;
+    if(input == ' ' && jumpFrames == 0){
+        jumpFrames = 1;
+        playerPOS = {0, 0};
+        justJumped = true;
+        std::cout << "Jump jumped! \n";
+    }
+
+    if(jumpFrames > 0 && !justJumped){
+        jumpFrames++;
+    }
+    if(jumpFrames > 3){
+        jumpFrames = 0;
+        playerPOS = {1, 0};
+    }
 
     const Coords newEnemy = spawnObstacle();
     //Checks if it's a valid coordinate which would mean there was a valid location for an enemy to spawn in
     if(newEnemy.x >= 0) 
         draw(newEnemy, Points::OBSTACLE);   //Spawns in an obstacle at a random point
 
-    shiftScreen();  //Moves the obstacles
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    //Moves the obstacles
+    if(!shiftScreen()) return false;
+    if(checkGameOver()) return false;
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
     system("clear");
     return true;
 }
