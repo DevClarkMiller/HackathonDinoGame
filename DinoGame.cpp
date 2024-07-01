@@ -98,16 +98,20 @@ bool DinoGame::gameLoop(){
     if(input == ' ' && jumpFrames == 0){
         jumpFrames = 1;
         playerPOS = {0, 0};
+        draw({1, 0}, Points::BLANK);
         justJumped = true;
         std::cout << "Jump jumped! \n";
     }
 
     if(jumpFrames > 0 && !justJumped){
         jumpFrames++;
+        playerPOS = {0, 0};
+        draw({1, 0}, Points::BLANK);
     }
     if(jumpFrames > 3){
         jumpFrames = 0;
         playerPOS = {1, 0};
+        draw({0, 0}, Points::BLANK);
     }
 
     const Coords newEnemy = spawnObstacle();
